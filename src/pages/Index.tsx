@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, Heart, Shield, Globe, Users } from "lucide-react";
 import heroImage from "@/assets/hero-healthcare.jpg";
+import { Link } from "react-router-dom";
 
 const Index = () => {
   const features = [
@@ -55,6 +56,11 @@ const Index = () => {
                 <Button size="lg" variant="outline" className="text-lg px-8 py-4 text-white border-white hover:bg-white hover:text-primary">
                   Free Consultation
                 </Button>
+              </div>
+              <div className="mt-3">
+                <Link to="/auth" className="text-sm text-white/90 underline underline-offset-4 hover:text-white">
+                  Already have an account? Log in
+                </Link>
               </div>
             </div>
             <div>

@@ -1,11 +1,33 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Globe } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/use-toast";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const location = useLocation();
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsLoggedIn(!!session);
+    });
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsLoggedIn(!!session);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({ title: "Logout failed", description: error.message });
+    } else {
+      toast({ title: "Signed out" });
+    }
+  };
 
   const navigation = [
     { name: "Home", href: "/" },
@@ -46,6 +68,18 @@ const Header = () => {
                 {item.name}
               </Link>
             ))}
+            {isLoggedIn ? (
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                Log out
+              </Button>
+            ) : (
+              <Link
+                to="/auth"
+                className="text-sm font-medium text-muted-foreground hover:text-primary"
+              >
+                Log in
+              </Link>
+            )}
             <Button size="sm" className="bg-hero-gradient hover:opacity-90">
               Free Consultation
             </Button>
@@ -85,6 +119,29 @@ const Header = () => {
                   {item.name}
                 </Link>
               ))}
+              {isLoggedIn ? (
+                <div className="px-3 py-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {
+                      handleLogout();
+                      setIsMenuOpen(false);
+                    }}
+                  >
+                    Log out
+                  </Button>
+                </div>
+              ) : (
+                <Link
+                  to="/auth"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-primary hover:bg-accent"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Log in
+                </Link>
+              )}
               <div className="px-3 py-2">
                 <Button size="sm" className="w-full bg-hero-gradient hover:opacity-90">
                   Free Consultation
