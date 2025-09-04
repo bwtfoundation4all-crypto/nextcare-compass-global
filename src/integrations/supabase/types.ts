@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      invoices: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          currency: string
+          description: string | null
+          due_date: string | null
+          dwolla_customer_id: string | null
+          dwolla_funding_source_id: string | null
+          dwolla_transfer_id: string | null
+          id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          due_date?: string | null
+          dwolla_customer_id?: string | null
+          dwolla_funding_source_id?: string | null
+          dwolla_transfer_id?: string | null
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          due_date?: string | null
+          dwolla_customer_id?: string | null
+          dwolla_funding_source_id?: string | null
+          dwolla_transfer_id?: string | null
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
