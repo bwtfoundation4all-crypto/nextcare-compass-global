@@ -18,6 +18,10 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				'sans': ['Inter', 'system-ui', 'sans-serif'],
+				'heading': ['Poppins', 'Inter', 'system-ui', 'sans-serif'],
+			},
 			backgroundImage: {
 				'trust-gradient': 'var(--trust-gradient)',
 				'hero-gradient': 'var(--hero-gradient)',

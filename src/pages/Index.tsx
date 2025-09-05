@@ -1,5 +1,10 @@
+import { useEffect } from "react";
 import Header from "@/components/Header";
 import ChatWidget from "@/components/ChatWidget";
+import Testimonials from "@/components/Testimonials";
+import TrustBadges from "@/components/TrustBadges";
+import ContactForm from "@/components/ContactForm";
+import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, Heart, Shield, Globe, Users } from "lucide-react";
@@ -7,6 +12,48 @@ import heroImage from "@/assets/hero-healthcare.jpg";
 import { Link } from "react-router-dom";
 
 const Index = () => {
+  // SEO and Meta Tags Setup
+  useEffect(() => {
+    document.title = "NextCare Global Services - International Healthcare Consulting & Insurance Navigation";
+    
+    // Update meta description
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute('content', 
+        'Professional international healthcare consulting, insurance navigation, and medical access support for individuals and families worldwide. Expert guidance for quality care across borders.'
+      );
+    }
+    
+    // Add structured data for SEO
+    const structuredData = {
+      "@context": "https://schema.org",
+      "@type": "HealthcareOrganization",
+      "name": "NextCare Global Services",
+      "description": "International healthcare consulting and insurance navigation services",
+      "url": "https://nextcareglobal.com",
+      "telephone": "+1-555-123-4567",
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "US"
+      },
+      "medicalSpecialty": ["Healthcare Consulting", "Insurance Navigation", "Medical Travel Coordination"],
+      "serviceArea": "Worldwide"
+    };
+    
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.textContent = JSON.stringify(structuredData);
+    document.head.appendChild(script);
+    
+    return () => {
+      // Cleanup
+      const existingScript = document.querySelector('script[type="application/ld+json"]');
+      if (existingScript) {
+        document.head.removeChild(existingScript);
+      }
+    };
+  }, []);
+
   const features = [
     {
       icon: Heart,
@@ -39,7 +86,7 @@ const Index = () => {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h1 className="text-4xl lg:text-6xl font-bold text-white mb-6">
+              <h1 className="text-4xl lg:text-6xl font-heading font-bold text-white mb-6">
                 Global Care.
                 <br />
                 <span className="text-white/90">Local Trust.</span>
@@ -79,7 +126,7 @@ const Index = () => {
       <section className="py-16 lg:py-24">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold mb-4">
+            <h2 className="text-3xl lg:text-4xl font-heading font-bold mb-4">
               Why Choose NextCare Global Services?
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
@@ -115,7 +162,7 @@ const Index = () => {
       <section className="py-16 lg:py-24 bg-accent">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold mb-4">Our Services</h2>
+            <h2 className="text-3xl lg:text-4xl font-heading font-bold mb-4">Our Services</h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               Comprehensive healthcare consulting services designed to support your journey
             </p>
@@ -172,8 +219,51 @@ const Index = () => {
         </div>
       </section>
       
+      {/* Trust Badges */}
+      <TrustBadges />
+      
+      {/* Testimonials */}
+      <Testimonials />
+      
+      {/* Contact Form Section */}
+      <section className="py-16 lg:py-24">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 items-start">
+            <div>
+              <h2 className="text-3xl lg:text-4xl font-heading font-bold mb-6">
+                Start Your Healthcare Journey Today
+              </h2>
+              <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
+                Our expert consultants are ready to help you navigate complex healthcare systems 
+                and find the right solutions for your needs. Get personalized guidance with a 
+                completely free consultation.
+              </p>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="text-muted-foreground">No obligation consultation</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <span className="text-muted-foreground">Expert guidance within 24 hours</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                  <span className="text-muted-foreground">Personalized healthcare strategy</span>
+                </div>
+              </div>
+            </div>
+            
+            <ContactForm />
+          </div>
+        </div>
+      </section>
+
       {/* Chat Widget */}
       <ChatWidget />
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 };
