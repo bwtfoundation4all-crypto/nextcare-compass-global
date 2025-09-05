@@ -1,4 +1,5 @@
 import Header from "@/components/Header";
+import ChatWidget from "@/components/ChatWidget";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, Heart, Shield, Globe, Users } from "lucide-react";
@@ -170,6 +171,9 @@ const Index = () => {
           </div>
         </div>
       </section>
+      
+      {/* Chat Widget */}
+      <ChatWidget />
     </div>
   );
 };
