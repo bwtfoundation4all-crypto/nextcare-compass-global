@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Globe } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 
@@ -45,14 +45,12 @@ const Header = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="w-10 h-10 bg-hero-gradient rounded-lg flex items-center justify-center">
-              <Globe className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <div className="text-xl font-bold text-foreground">NextCare</div>
-              <div className="text-sm text-muted-foreground">Global Services</div>
-            </div>
+          <Link to="/" className="flex items-center space-x-3">
+            <img 
+              src="/lovable-uploads/1cd41efc-d3d5-49f5-9da3-d031750143ff.png" 
+              alt="NextCare Global Services - Health Consultants and Medical Services"
+              className="h-12 w-auto hover:opacity-90 transition-opacity"
+            />
           </Link>
 
           {/* Desktop Navigation */}
