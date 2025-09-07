@@ -12,29 +12,29 @@ interface DwollaTokenResponse { access_token: string; expires_in: number; token_
 
 async function getDwollaToken(env: string, key: string, secret: string): Promise<string> {
   const base = env === "production" ? "https://api.dwolla.com" : "https://api-sandbox.dwolla.com";
+  
+  // Always use Basic Auth for consistency
+  const basic = btoa(`${key}:${secret}`);
   const res = await fetch(`${base}/token`, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Authorization: `Basic ${basic}`,
+    },
     body: new URLSearchParams({ grant_type: "client_credentials" }),
-    // Dwolla expects HTTP Basic Auth with key:secret
   });
-  if (res.status === 401) {
-    // Some environments require explicit Authorization header
-    const basic = btoa(`${key}:${secret}`);
-    const res2 = await fetch(`${base}/token`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: `Basic ${basic}`,
-      },
-      body: new URLSearchParams({ grant_type: "client_credentials" }),
-    });
-    if (!res2.ok) throw new Error(`Dwolla token error: ${res2.status} ${await res2.text()}`);
-    const data = (await res2.json()) as DwollaTokenResponse;
-    return data.access_token;
+  
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error(`Dwolla token error: ${res.status}`, errorText);
+    throw new Error(`Dwolla authentication failed: ${res.status}`);
   }
-  if (!res.ok) throw new Error(`Dwolla token error: ${res.status} ${await res.text()}`);
+  
   const data = (await res.json()) as DwollaTokenResponse;
+  if (!data.access_token) {
+    throw new Error("Dwolla token response missing access_token");
+  }
+  
   return data.access_token;
 }
 
@@ -57,11 +57,35 @@ Deno.serve(async (req) => {
     const { data: { user }, error: userErr } = await supabase.auth.getUser();
     if (userErr || !user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-    // Load profile
-    const { data: profile, error: pErr } = await supabase.from("profiles").select("id, user_id, first_name, last_name, dwolla_customer_id").eq("user_id", user.id).maybeSingle();
-    if (pErr) throw pErr;
+    // Load or create profile
+    let { data: profile, error: pErr } = await supabase.from("profiles").select("id, user_id, first_name, last_name, dwolla_customer_id").eq("user_id", user.id).maybeSingle();
+    
+    if (pErr && pErr.code !== "PGRST116") { // PGRST116 = no rows returned
+      console.error("Profile fetch error:", pErr);
+      throw new Error("Failed to fetch user profile");
+    }
+
+    // Create profile if it doesn't exist
+    if (!profile) {
+      const { data: newProfile, error: createErr } = await supabase
+        .from("profiles")
+        .insert({
+          user_id: user.id,
+          first_name: user.user_metadata?.first_name || "Sandbox",
+          last_name: user.user_metadata?.last_name || "User"
+        })
+        .select("id, user_id, first_name, last_name, dwolla_customer_id")
+        .single();
+      
+      if (createErr) {
+        console.error("Profile create error:", createErr);
+        throw new Error("Failed to create user profile");
+      }
+      profile = newProfile;
+    }
 
     if (profile?.dwolla_customer_id) {
+      console.log(`Returning existing Dwolla customer: ${profile.dwolla_customer_id}`);
       return new Response(JSON.stringify({ dwollaCustomerId: profile.dwolla_customer_id, alreadyExists: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -88,19 +112,41 @@ Deno.serve(async (req) => {
     });
 
     if (!createRes.ok) {
-      const txt = await createRes.text();
-      throw new Error(`Dwolla create customer failed: ${createRes.status} ${txt}`);
+      const errorText = await createRes.text();
+      console.error(`Dwolla create customer failed: ${createRes.status}`, errorText);
+      
+      let userMessage = "Failed to create Dwolla customer";
+      if (createRes.status === 400) {
+        userMessage = "Invalid customer data provided";
+      } else if (createRes.status === 401 || createRes.status === 403) {
+        userMessage = "Dwolla authentication failed";
+      }
+      
+      throw new Error(userMessage);
     }
 
     const location = createRes.headers.get("Location");
-    if (!location) throw new Error("Missing Location header from Dwolla");
+    if (!location) {
+      console.error("Missing Location header from Dwolla response");
+      throw new Error("Invalid response from Dwolla");
+    }
+    
     const dwollaCustomerId = location.split("/").pop();
+    if (!dwollaCustomerId) {
+      throw new Error("Invalid customer ID from Dwolla");
+    }
+
+    console.log(`Created new Dwolla customer: ${dwollaCustomerId}`);
 
     const { error: upErr } = await supabase
       .from("profiles")
       .update({ dwolla_customer_id: dwollaCustomerId })
       .eq("user_id", user.id);
-    if (upErr) throw upErr;
+      
+    if (upErr) {
+      console.error("Profile update error:", upErr);
+      throw new Error("Failed to save Dwolla customer ID");
+    }
 
     return new Response(JSON.stringify({ dwollaCustomerId }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
