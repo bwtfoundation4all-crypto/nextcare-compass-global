@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import ReCAPTCHA from "react-google-recaptcha";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,6 +44,11 @@ async function checkPasswordPwned(password: string): Promise<number> {
 const Auth = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const loginCaptchaRef = useRef<ReCAPTCHA>(null);
+  const signupCaptchaRef = useRef<ReCAPTCHA>(null);
+
+  // reCAPTCHA site key (6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI is the test key)
+  const RECAPTCHA_SITE_KEY = "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI";
 
   // SEO basics
   useEffect(() => {
@@ -86,15 +92,30 @@ const Auth = () => {
     const formData = new FormData(e.currentTarget);
     const email = String(formData.get("email") || "").trim();
     const password = String(formData.get("password") || "").trim();
+    
     if (!email || !password) {
       toast({ title: "Missing information", description: "Please enter your email and password." });
       return;
     }
+
+    // Get CAPTCHA token
+    const captchaToken = loginCaptchaRef.current?.getValue();
+    if (!captchaToken) {
+      toast({ title: "CAPTCHA required", description: "Please complete the CAPTCHA verification." });
+      return;
+    }
+    
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({ 
+      email, 
+      password,
+      options: { captchaToken }
+    });
     setLoading(false);
+    
     if (error) {
       toast({ title: "Login failed", description: error.message });
+      loginCaptchaRef.current?.reset();
     } else {
       toast({ title: "Welcome back" });
       navigate("/");
@@ -106,8 +127,16 @@ const Auth = () => {
     const formData = new FormData(e.currentTarget);
     const email = String(formData.get("email") || "").trim();
     const password = String(formData.get("password") || "").trim();
+    
     if (!email || !password) {
       toast({ title: "Missing information", description: "Please enter your email and password." });
+      return;
+    }
+
+    // Get CAPTCHA token
+    const captchaToken = signupCaptchaRef.current?.getValue();
+    if (!captchaToken) {
+      toast({ title: "CAPTCHA required", description: "Please complete the CAPTCHA verification." });
       return;
     }
 
@@ -130,11 +159,16 @@ const Auth = () => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: redirectUrl }
+      options: { 
+        emailRedirectTo: redirectUrl,
+        captchaToken
+      }
     });
     setLoading(false);
+    
     if (error) {
       toast({ title: "Signup failed", description: error.message });
+      signupCaptchaRef.current?.reset();
     } else {
       toast({
         title: "Check your email",
@@ -165,6 +199,13 @@ const Auth = () => {
                   <Label htmlFor="password">Password</Label>
                   <Input id="password" name="password" type="password" autoComplete="current-password" />
                 </div>
+                <div className="space-y-2">
+                  <ReCAPTCHA
+                    ref={loginCaptchaRef}
+                    sitekey={RECAPTCHA_SITE_KEY}
+                    theme="light"
+                  />
+                </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? "Please wait..." : "Log in"}
                 </Button>
@@ -180,6 +221,13 @@ const Auth = () => {
                 <div className="space-y-2">
                   <Label htmlFor="password-signup">Password</Label>
                   <Input id="password-signup" name="password" type="password" autoComplete="new-password" />
+                </div>
+                <div className="space-y-2">
+                  <ReCAPTCHA
+                    ref={signupCaptchaRef}
+                    sitekey={RECAPTCHA_SITE_KEY}
+                    theme="light"
+                  />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? "Please wait..." : "Create account"}
