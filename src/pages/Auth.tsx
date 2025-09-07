@@ -164,12 +164,19 @@ const Auth = () => {
       emailRedirectTo: redirectUrl,
       ...(CAPTCHA_ENABLED && captchaToken ? { captchaToken } : {})
     };
+    
+    console.log('Signup attempt:', { email, captchaEnabled: CAPTCHA_ENABLED, authOptions });
+    
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: authOptions
     });
     setLoading(false);
+    
+    if (error) {
+      console.error('Signup error:', error);
+    }
     
     if (error) {
       toast({ title: "Signup failed", description: error.message });
