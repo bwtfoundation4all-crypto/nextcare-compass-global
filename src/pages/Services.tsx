@@ -1,65 +1,96 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/use-toast";
 import { 
-  Globe, 
-  Shield, 
   Heart, 
   FileText, 
-  Users, 
   CreditCard, 
-  MapPin,
-  Languages
+  Loader2,
+  Check
 } from "lucide-react";
 import servicesImage from "@/assets/services-overview.jpg";
 
 const Services = () => {
-  const services = [
-    {
-      title: "Healthcare Access Consulting",
-      description: "Expert guidance for accessing quality healthcare across borders",
-      icon: Heart,
-      features: [
-        "Hospital and clinic referrals worldwide",
-        "Medical travel coordination",
-        "Visa support for medical treatment",
-        "Health documentation services"
-      ]
-    },
-    {
-      title: "Insurance Navigation",
-      description: "Comprehensive support for international health insurance",
-      icon: Shield,
-      features: [
-        "International insurance plan selection",
-        "Claims support and documentation",
-        "Emergency coverage advisory",
-        "Policy comparison and optimization"
-      ]
-    },
-    {
-      title: "Financial Assistance",
-      description: "Support for managing healthcare costs and finding aid",
-      icon: CreditCard,
-      features: [
-        "Medical bill relief guidance",
-        "Payment planning assistance",
-        "Nonprofit organization coordination",
-        "Sponsorship and donor matching"
-      ]
-    },
-    {
-      title: "Compliance & Identity Services",
-      description: "Secure documentation and legal compliance support",
-      icon: FileText,
-      features: [
-        "Legal identity verification",
-        "Secure document management",
-        "Multilingual form support",
-        "Privacy and compliance assurance"
-      ]
+  const navigate = useNavigate();
+  const [services, setServices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+  const [paymentLoading, setPaymentLoading] = useState<string | null>(null);
+
+  useEffect(() => {
+    checkUser();
+    fetchServices();
+  }, []);
+
+  const checkUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setUser(user);
+  };
+
+  const fetchServices = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("services" as any)
+        .select("*")
+        .eq("is_active", true)
+        .order("price");
+
+      if (error) throw error;
+      setServices(data || []);
+    } catch (error) {
+      console.error("Error fetching services:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load services. Please refresh the page.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  const handlePayment = async (serviceId: string) => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+
+    setPaymentLoading(serviceId);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('create-stripe-checkout', {
+        body: {
+          serviceId: serviceId
+        }
+      });
+
+      if (error) throw error;
+
+      // Open Stripe checkout in a new tab
+      window.open(data.url, '_blank');
+    } catch (error) {
+      console.error("Error creating checkout:", error);
+      toast({
+        title: "Payment Error",
+        description: "Failed to create payment session. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setPaymentLoading(null);
+    }
+  };
+
+  const getServiceIcon = (name: string) => {
+    if (name.toLowerCase().includes('healthcare') || name.toLowerCase().includes('medical')) return Heart;
+    if (name.toLowerCase().includes('document') || name.toLowerCase().includes('compliance')) return FileText;
+    if (name.toLowerCase().includes('financial') || name.toLowerCase().includes('payment')) return CreditCard;
+    return Heart;
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -102,34 +133,66 @@ const Services = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
-            {services.map((service, index) => {
-              const IconComponent = service.icon;
-              return (
-                <Card key={index} className="shadow-card hover:shadow-hero transition-shadow duration-300">
-                  <CardHeader>
-                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                      <IconComponent className="h-6 w-6 text-primary" />
-                    </div>
-                    <CardTitle className="text-xl">{service.title}</CardTitle>
-                    <CardDescription className="text-base">
-                      {service.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-2">
-                      {service.features.map((feature, featureIndex) => (
-                        <li key={featureIndex} className="flex items-start space-x-2">
-                          <div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0" />
-                          <span className="text-muted-foreground">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+          {loading ? (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {services.map((service) => {
+                const IconComponent = getServiceIcon(service.name);
+                return (
+                  <Card key={service.id} className="shadow-card hover:shadow-hero transition-all duration-300 flex flex-col">
+                    <CardHeader>
+                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                        <IconComponent className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="flex items-start justify-between">
+                        <CardTitle className="text-xl">{service.name}</CardTitle>
+                        <Badge variant="outline" className="ml-2">
+                          ${service.price}
+                        </Badge>
+                      </div>
+                      <CardDescription className="text-base">
+                        {service.description}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex-grow">
+                      <div className="space-y-4">
+                        <div>
+                          <h4 className="font-semibold mb-2">Duration: {service.duration || '60 minutes'}</h4>
+                          {service.features && service.features.length > 0 && (
+                            <ul className="space-y-2">
+                              {service.features.map((feature: string, featureIndex: number) => (
+                                <li key={featureIndex} className="flex items-start space-x-2">
+                                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                                  <span className="text-sm text-muted-foreground">{feature}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                        <Button 
+                          onClick={() => handlePayment(service.id)}
+                          disabled={paymentLoading === service.id}
+                          className="w-full bg-hero-gradient hover:opacity-90"
+                        >
+                          {paymentLoading === service.id ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Processing...
+                            </>
+                          ) : (
+                            <>Book & Pay - ${service.price}</>
+                          )}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 
@@ -142,10 +205,18 @@ const Services = () => {
               Let our experts help you navigate your healthcare journey with confidence
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-hero-gradient hover:opacity-90">
+              <Button 
+                size="lg" 
+                className="bg-hero-gradient hover:opacity-90"
+                onClick={() => navigate("/book-appointment")}
+              >
                 Book Free Consultation
               </Button>
-              <Button size="lg" variant="outline">
+              <Button 
+                size="lg" 
+                variant="outline"
+                onClick={() => navigate("/about")}
+              >
                 Learn More About Us
               </Button>
             </div>

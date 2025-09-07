@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -11,16 +11,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "@/components/ui/use-toast";
-import { CalendarIcon, Clock, Loader2 } from "lucide-react";
+import { CalendarIcon, Clock, Loader2, CreditCard } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
 const BookAppointment = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [services, setServices] = useState<any[]>([]);
   const [date, setDate] = useState<Date>();
+  const [paymentMode, setPaymentMode] = useState(false);
   const [formData, setFormData] = useState({
+    serviceId: searchParams.get('service') || "",
     appointmentType: "",
     time: "",
     consultantName: "",
@@ -32,6 +36,7 @@ const BookAppointment = () => {
 
   useEffect(() => {
     checkUser();
+    fetchServices();
   }, []);
 
   const checkUser = async () => {
@@ -42,6 +47,21 @@ const BookAppointment = () => {
     }
     setUser(user);
     setFormData(prev => ({ ...prev, contactEmail: user.email || "" }));
+  };
+
+  const fetchServices = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("services" as any)
+        .select("*")
+        .eq("is_active", true)
+        .order("price");
+
+      if (error) throw error;
+      setServices(data || []);
+    } catch (error) {
+      console.error("Error fetching services:", error);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,6 +75,13 @@ const BookAppointment = () => {
       return;
     }
 
+    const selectedService = services.find(s => s.id === formData.serviceId);
+    
+    if (selectedService && selectedService.price > 0 && !paymentMode) {
+      setPaymentMode(true);
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -62,7 +89,8 @@ const BookAppointment = () => {
       const [hours, minutes] = formData.time.split(':');
       appointmentDateTime.setHours(parseInt(hours), parseInt(minutes));
 
-      const { error } = await supabase
+      // Insert appointment
+      const { data: appointment, error: appointmentError } = await supabase
         .from("appointments")
         .insert({
           user_id: user.id,
@@ -74,14 +102,36 @@ const BookAppointment = () => {
           contact_phone: formData.contactPhone || null,
           preferred_language: formData.preferredLanguage,
           status: "scheduled"
+        } as any)
+        .select()
+        .single();
+
+      if (appointmentError) throw appointmentError;
+
+      // If paid service, create payment
+      if (selectedService && selectedService.price > 0) {
+        const { data, error: paymentError } = await supabase.functions.invoke('create-stripe-checkout', {
+          body: {
+            serviceId: selectedService.id,
+            appointmentId: appointment.id
+          }
         });
 
-      if (error) throw error;
+        if (paymentError) throw paymentError;
 
-      toast({
-        title: "Appointment Booked",
-        description: "Your appointment has been scheduled successfully. You'll receive a confirmation email shortly."
-      });
+        // Open Stripe checkout
+        window.open(data.url, '_blank');
+        
+        toast({
+          title: "Appointment Created",
+          description: "Please complete payment to confirm your appointment."
+        });
+      } else {
+        toast({
+          title: "Appointment Booked",
+          description: "Your free consultation has been scheduled successfully."
+        });
+      }
 
       navigate("/dashboard");
     } catch (error) {
@@ -89,6 +139,31 @@ const BookAppointment = () => {
       toast({
         title: "Booking Failed",
         description: "Failed to book appointment. Please try again or contact support.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePayment = async () => {
+    if (!formData.serviceId) return;
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-stripe-checkout', {
+        body: {
+          serviceId: formData.serviceId
+        }
+      });
+
+      if (error) throw error;
+      window.open(data.url, '_blank');
+    } catch (error) {
+      console.error("Error creating checkout:", error);
+      toast({
+        title: "Payment Error",
+        description: "Failed to create payment session. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -127,6 +202,27 @@ const BookAppointment = () => {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
+                    <Label htmlFor="serviceId">Service *</Label>
+                    <Select value={formData.serviceId} onValueChange={(value) => handleInputChange("serviceId", value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a service" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {services.map((service) => (
+                          <SelectItem key={service.id} value={service.id}>
+                            <div className="flex items-center justify-between w-full">
+                              <span>{service.name}</span>
+                              <span className="ml-2 text-muted-foreground">
+                                {service.price > 0 ? `$${service.price}` : 'Free'}
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
                     <Label htmlFor="appointmentType">Appointment Type *</Label>
                     <Select value={formData.appointmentType} onValueChange={(value) => handleInputChange("appointmentType", value)}>
                       <SelectTrigger>
@@ -139,6 +235,9 @@ const BookAppointment = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
 
                   <div className="space-y-2">
                     <Label htmlFor="preferredLanguage">Preferred Language</Label>
@@ -250,24 +349,63 @@ const BookAppointment = () => {
                   />
                 </div>
 
-                <Button 
-                  type="submit" 
-                  className="w-full bg-hero-gradient hover:opacity-90" 
-                  size="lg"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Booking Appointment...
-                    </>
-                  ) : (
-                    <>
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      Book Appointment
-                    </>
-                  )}
-                </Button>
+                {paymentMode ? (
+                  <div className="space-y-4">
+                    <div className="p-4 bg-accent rounded-lg">
+                      <h3 className="font-semibold mb-2">Payment Required</h3>
+                      <p className="text-sm text-muted-foreground">
+                        This service requires payment. Please complete the payment to confirm your appointment.
+                      </p>
+                    </div>
+                    <div className="flex gap-4">
+                      <Button 
+                        type="button"
+                        variant="outline"
+                        onClick={() => setPaymentMode(false)}
+                        className="flex-1"
+                      >
+                        Back to Edit
+                      </Button>
+                      <Button 
+                        type="button"
+                        onClick={handlePayment}
+                        className="flex-1 bg-hero-gradient hover:opacity-90"
+                        disabled={loading}
+                      >
+                        {loading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard className="mr-2 h-4 w-4" />
+                            Pay & Confirm
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-hero-gradient hover:opacity-90" 
+                    size="lg"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Booking Appointment...
+                      </>
+                    ) : (
+                      <>
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {services.find(s => s.id === formData.serviceId)?.price > 0 ? 'Review & Pay' : 'Book Free Appointment'}
+                      </>
+                    )}
+                  </Button>
+                )}
 
                 <p className="text-xs text-muted-foreground text-center">
                   By booking this appointment, you agree to our{" "}
