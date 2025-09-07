@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,9 +24,19 @@ const ContactForm = ({ title = "Get Free Consultation" }: { title?: string }) =>
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate form submission
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const { data, error } = await supabase.functions.invoke('submit-consultation', {
+        body: {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          country: formData.country,
+          service: formData.service,
+          message: formData.message
+        }
+      });
+
+      if (error) throw error;
       
       toast({
         title: "Consultation Request Received",
@@ -42,6 +53,7 @@ const ContactForm = ({ title = "Get Free Consultation" }: { title?: string }) =>
         message: ""
       });
     } catch (error) {
+      console.error("Submission error:", error);
       toast({
         title: "Submission Failed",
         description: "Please try again or contact us directly.",

@@ -14,6 +14,10 @@ import Payments from "./pages/Payments";
 import CustomerService from "./pages/CustomerService";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import Dashboard from "./pages/Dashboard";
+import BookAppointment from "./pages/BookAppointment";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentCancelled from "./pages/PaymentCancelled";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +38,10 @@ const App = () => (
             <Route path="/support" element={<CustomerService />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/book-appointment" element={<BookAppointment />} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/payment-cancelled" element={<PaymentCancelled />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
