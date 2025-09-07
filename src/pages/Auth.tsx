@@ -49,6 +49,9 @@ const Auth = () => {
 
   // reCAPTCHA site key (6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI is the test key)
   const RECAPTCHA_SITE_KEY = "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI";
+  
+  // CAPTCHA is optional - if Supabase CAPTCHA isn't configured, we skip it
+  const CAPTCHA_ENABLED = false; // Set to true when Supabase CAPTCHA is configured
 
   // SEO basics
   useEffect(() => {
@@ -98,24 +101,25 @@ const Auth = () => {
       return;
     }
 
-    // Get CAPTCHA token
-    const captchaToken = loginCaptchaRef.current?.getValue();
-    if (!captchaToken) {
+    // Get CAPTCHA token (optional if not enabled)
+    const captchaToken = CAPTCHA_ENABLED ? loginCaptchaRef.current?.getValue() : null;
+    if (CAPTCHA_ENABLED && !captchaToken) {
       toast({ title: "CAPTCHA required", description: "Please complete the CAPTCHA verification." });
       return;
     }
     
     setLoading(true);
+    const authOptions = CAPTCHA_ENABLED && captchaToken ? { captchaToken } : {};
     const { error } = await supabase.auth.signInWithPassword({ 
       email, 
       password,
-      options: { captchaToken }
+      options: authOptions
     });
     setLoading(false);
     
     if (error) {
       toast({ title: "Login failed", description: error.message });
-      loginCaptchaRef.current?.reset();
+      if (CAPTCHA_ENABLED) loginCaptchaRef.current?.reset();
     } else {
       toast({ title: "Welcome back" });
       navigate("/");
@@ -133,9 +137,9 @@ const Auth = () => {
       return;
     }
 
-    // Get CAPTCHA token
-    const captchaToken = signupCaptchaRef.current?.getValue();
-    if (!captchaToken) {
+    // Get CAPTCHA token (optional if not enabled)
+    const captchaToken = CAPTCHA_ENABLED ? signupCaptchaRef.current?.getValue() : null;
+    if (CAPTCHA_ENABLED && !captchaToken) {
       toast({ title: "CAPTCHA required", description: "Please complete the CAPTCHA verification." });
       return;
     }
@@ -156,19 +160,20 @@ const Auth = () => {
 
     setLoading(true);
     const redirectUrl = `${window.location.origin}/`;
+    const authOptions = {
+      emailRedirectTo: redirectUrl,
+      ...(CAPTCHA_ENABLED && captchaToken ? { captchaToken } : {})
+    };
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { 
-        emailRedirectTo: redirectUrl,
-        captchaToken
-      }
+      options: authOptions
     });
     setLoading(false);
     
     if (error) {
       toast({ title: "Signup failed", description: error.message });
-      signupCaptchaRef.current?.reset();
+      if (CAPTCHA_ENABLED) signupCaptchaRef.current?.reset();
     } else {
       toast({
         title: "Check your email",
@@ -199,13 +204,15 @@ const Auth = () => {
                   <Label htmlFor="password">Password</Label>
                   <Input id="password" name="password" type="password" autoComplete="current-password" />
                 </div>
-                <div className="space-y-2">
-                  <ReCAPTCHA
-                    ref={loginCaptchaRef}
-                    sitekey={RECAPTCHA_SITE_KEY}
-                    theme="light"
-                  />
-                </div>
+                {CAPTCHA_ENABLED && (
+                  <div className="space-y-2">
+                    <ReCAPTCHA
+                      ref={loginCaptchaRef}
+                      sitekey={RECAPTCHA_SITE_KEY}
+                      theme="light"
+                    />
+                  </div>
+                )}
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? "Please wait..." : "Log in"}
                 </Button>
@@ -222,13 +229,15 @@ const Auth = () => {
                   <Label htmlFor="password-signup">Password</Label>
                   <Input id="password-signup" name="password" type="password" autoComplete="new-password" />
                 </div>
-                <div className="space-y-2">
-                  <ReCAPTCHA
-                    ref={signupCaptchaRef}
-                    sitekey={RECAPTCHA_SITE_KEY}
-                    theme="light"
-                  />
-                </div>
+                {CAPTCHA_ENABLED && (
+                  <div className="space-y-2">
+                    <ReCAPTCHA
+                      ref={signupCaptchaRef}
+                      sitekey={RECAPTCHA_SITE_KEY}
+                      theme="light"
+                    />
+                  </div>
+                )}
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? "Please wait..." : "Create account"}
                 </Button>
