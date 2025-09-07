@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +24,7 @@ interface Invoice {
 }
 
 const Payments = () => {
+  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
@@ -180,7 +182,7 @@ const Payments = () => {
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
             <p className="text-muted-foreground mb-4">Please log in to access payments</p>
-            <Button onClick={() => window.location.href = '/auth'}>Go to Login</Button>
+            <Button onClick={() => navigate('/auth')}>Go to Login</Button>
           </div>
         </div>
       </div>

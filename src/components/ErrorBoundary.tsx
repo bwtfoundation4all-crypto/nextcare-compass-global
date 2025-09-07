@@ -65,7 +65,7 @@ const DefaultErrorFallback = ({ error, resetError }: { error?: Error; resetError
               <RefreshCw className="h-4 w-4" />
               <span>Try Again</span>
             </Button>
-            <Button onClick={() => window.location.href = '/'}>
+            <Button onClick={() => (window as any).location = '/'}>
               Go Home
             </Button>
           </div>

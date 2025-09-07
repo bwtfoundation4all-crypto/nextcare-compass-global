@@ -1,4 +1,4 @@
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 export const handleApiError = (error: any, context: string = "Operation") => {
   console.error(`${context} error:`, error);
