@@ -11,3 +11,13 @@ verify_jwt = true
 
 [functions.customer-portal]
 verify_jwt = true
+
+# Dwolla functions
+[functions.dwolla-create-customer]
+verify_jwt = true
+
+[functions.dwolla-create-and-verify-funding-source]
+verify_jwt = true
+
+[functions.dwolla-transfer]
+verify_jwt = true

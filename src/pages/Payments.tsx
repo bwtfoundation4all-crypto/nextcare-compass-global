@@ -34,6 +34,13 @@ const Payments = () => {
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
 
+  // Dwolla ACH sandbox state
+  const [dwollaCustomerId, setDwollaCustomerId] = useState<string | null>(null);
+  const [dwollaFundingSourceId, setDwollaFundingSourceId] = useState<string | null>(null);
+  const [achAmount, setAchAmount] = useState("");
+  const [achNote, setAchNote] = useState("");
+  const [achLoading, setAchLoading] = useState(false);
+
   useEffect(() => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -130,6 +137,59 @@ const Payments = () => {
         description: `Invoice ${newStatus}`,
       });
       await fetchInvoices();
+    }
+  };
+
+  // Dwolla ACH actions
+  const handleCreateDwollaCustomer = async () => {
+    setAchLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('dwolla-create-customer');
+      if (error) throw error;
+      setDwollaCustomerId((data as any)?.dwollaCustomerId || (data as any)?.dwolla_customer_id || null);
+      toast({ title: "Dwolla customer ready" });
+    } catch (e: any) {
+      toast({ title: "Dwolla error", description: e.message || String(e), variant: "destructive" });
+    } finally {
+      setAchLoading(false);
+    }
+  };
+
+  const handleCreateFundingSource = async () => {
+    setAchLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('dwolla-create-and-verify-funding-source');
+      if (error) throw error;
+      setDwollaFundingSourceId((data as any)?.fundingSourceId || null);
+      toast({ title: "Bank linked (sandbox)" });
+    } catch (e: any) {
+      toast({ title: "Dwolla error", description: e.message || String(e), variant: "destructive" });
+    } finally {
+      setAchLoading(false);
+    }
+  };
+
+  const handleAchTransfer = async () => {
+    if (!dwollaFundingSourceId) {
+      toast({ title: "Missing bank", description: "Link a test bank first", variant: "destructive" });
+      return;
+    }
+    const amt = parseFloat(achAmount);
+    if (isNaN(amt) || amt <= 0) {
+      toast({ title: "Invalid amount", variant: "destructive" });
+      return;
+    }
+    setAchLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('dwolla-transfer', {
+        body: { amountCents: Math.round(amt * 100), sourceFundingSourceId: dwollaFundingSourceId, note: achNote || undefined }
+      });
+      if (error) throw error;
+      toast({ title: "ACH initiated", description: `Transfer ID: ${(data as any)?.transferId || 'created'}` });
+    } catch (e: any) {
+      toast({ title: "Dwolla error", description: e.message || String(e), variant: "destructive" });
+    } finally {
+      setAchLoading(false);
     }
   };
 
@@ -254,8 +314,42 @@ const Payments = () => {
                   </div>
                 </form>
               </CardContent>
-            </Card>
+          </Card>
           )}
+
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>ACH (Dwolla) Sandbox</CardTitle>
+              <CardDescription>Set up your test customer and bank, then run a test transfer.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap gap-2">
+                <Button onClick={handleCreateDwollaCustomer} disabled={achLoading}>
+                  {dwollaCustomerId ? 'Customer Ready' : 'Create Dwolla Customer'}
+                </Button>
+                <Button onClick={handleCreateFundingSource} variant="secondary" disabled={achLoading || !dwollaCustomerId}>
+                  {dwollaFundingSourceId ? 'Bank Linked' : 'Link Test Bank'}
+                </Button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="achAmount">Amount (USD)</Label>
+                  <Input id="achAmount" type="number" step="0.01" min="0.01" value={achAmount} onChange={(e) => setAchAmount(e.target.value)} placeholder="0.00" />
+                </div>
+                <div className="md:col-span-2">
+                  <Label htmlFor="achNote">Note (optional)</Label>
+                  <Input id="achNote" value={achNote} onChange={(e) => setAchNote(e.target.value)} placeholder="Description" />
+                </div>
+              </div>
+              <Button onClick={handleAchTransfer} disabled={achLoading || !dwollaFundingSourceId}>
+                {achLoading ? 'Processing...' : 'Initiate ACH Transfer'}
+              </Button>
+              <div className="text-sm text-muted-foreground">
+                {dwollaCustomerId && <div>Customer ID: {dwollaCustomerId}</div>}
+                {dwollaFundingSourceId && <div>Funding Source ID: {dwollaFundingSourceId}</div>}
+              </div>
+            </CardContent>
+          </Card>
 
           <div className="space-y-4">
             <h2 className="text-2xl font-semibold">Your Invoices</h2>
