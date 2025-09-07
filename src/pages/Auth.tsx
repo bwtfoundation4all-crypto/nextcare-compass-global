@@ -8,6 +8,38 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
+// Pwned Passwords k-anonymity check utilities
+function ab2hex(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, "0")).join("").toUpperCase();
+}
+
+async function sha1(text: string): Promise<string> {
+  const enc = new TextEncoder();
+  const data = enc.encode(text);
+  const hashBuffer = await crypto.subtle.digest("SHA-1", data);
+  return ab2hex(hashBuffer);
+}
+
+async function checkPasswordPwned(password: string): Promise<number> {
+  const hash = await sha1(password);
+  const prefix = hash.slice(0, 5);
+  const suffix = hash.slice(5);
+  const res = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`, {
+    headers: { "Add-Padding": "true" },
+  });
+  if (!res.ok) throw new Error("HIBP request failed");
+  const body = await res.text();
+  for (const line of body.split("\n")) {
+    const [hashSuffix, countStr] = line.trim().split(":");
+    if (hashSuffix && hashSuffix.toUpperCase() === suffix) {
+      const count = parseInt(countStr, 10);
+      return Number.isNaN(count) ? 0 : count;
+    }
+  }
+  return 0;
+}
+
 const Auth = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -78,6 +110,21 @@ const Auth = () => {
       toast({ title: "Missing information", description: "Please enter your email and password." });
       return;
     }
+
+    // Block breached passwords using Have I Been Pwned k-anonymity check
+    try {
+      const breachCount = await checkPasswordPwned(password);
+      if (breachCount > 0) {
+        toast({
+          title: "Choose a safer password",
+          description: `This password appeared in ${breachCount.toLocaleString()} breaches. Please use a unique, strong password.`,
+        });
+        return;
+      }
+    } catch {
+      // If the check fails, we won't block signup; continue gracefully
+    }
+
     setLoading(true);
     const redirectUrl = `${window.location.origin}/`;
     const { error } = await supabase.auth.signUp({
