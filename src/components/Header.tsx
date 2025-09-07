@@ -69,9 +69,14 @@ const Header = () => {
               </Link>
             ))}
             {isLoggedIn ? (
-              <Button variant="outline" size="sm" onClick={handleLogout}>
-                Log out
-              </Button>
+              <>
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/dashboard">Dashboard</Link>
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleLogout}>
+                  Log out
+                </Button>
+              </>
             ) : (
               <Link
                 to="/auth"
@@ -80,8 +85,10 @@ const Header = () => {
                 Log in
               </Link>
             )}
-            <Button size="sm" className="bg-hero-gradient hover:opacity-90">
-              Free Consultation
+            <Button size="sm" className="bg-hero-gradient hover:opacity-90" asChild>
+              <Link to="/book-appointment">
+                Free Consultation
+              </Link>
             </Button>
           </nav>
 
@@ -120,19 +127,28 @@ const Header = () => {
                 </Link>
               ))}
               {isLoggedIn ? (
-                <div className="px-3 py-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => {
-                      handleLogout();
-                      setIsMenuOpen(false);
-                    }}
+                <>
+                  <Link
+                    to="/dashboard"
+                    className="block px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-primary hover:bg-accent"
+                    onClick={() => setIsMenuOpen(false)}
                   >
-                    Log out
-                  </Button>
-                </div>
+                    Dashboard
+                  </Link>
+                  <div className="px-3 py-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => {
+                        handleLogout();
+                        setIsMenuOpen(false);
+                      }}
+                    >
+                      Log out
+                    </Button>
+                  </div>
+                </>
               ) : (
                 <Link
                   to="/auth"
@@ -143,8 +159,10 @@ const Header = () => {
                 </Link>
               )}
               <div className="px-3 py-2">
-                <Button size="sm" className="w-full bg-hero-gradient hover:opacity-90">
-                  Free Consultation
+                <Button size="sm" className="w-full bg-hero-gradient hover:opacity-90" asChild>
+                  <Link to="/book-appointment">
+                    Free Consultation
+                  </Link>
                 </Button>
               </div>
             </div>

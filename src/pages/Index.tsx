@@ -97,12 +97,16 @@ const Index = () => {
                 for your health journey, with compassion every step of the way.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" variant="secondary" className="text-lg px-8 py-4">
-                  Get Help Now
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                <Button size="lg" variant="secondary" className="text-lg px-8 py-4" asChild>
+                  <Link to="/contact">
+                    Get Help Now
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Link>
                 </Button>
-                <Button size="lg" variant="outline" className="text-lg px-8 py-4 text-white border-white hover:bg-white hover:text-primary">
-                  Free Consultation
+                <Button size="lg" variant="outline" className="text-lg px-8 py-4 text-white border-white hover:bg-white hover:text-primary" asChild>
+                  <Link to="/book-appointment">
+                    Free Consultation
+                  </Link>
                 </Button>
               </div>
               <div className="mt-3">
@@ -188,9 +192,11 @@ const Index = () => {
           </div>
 
           <div className="text-center">
-            <Button size="lg" className="bg-hero-gradient hover:opacity-90">
-              Explore All Services
-              <ArrowRight className="ml-2 h-5 w-5" />
+            <Button size="lg" className="bg-hero-gradient hover:opacity-90" asChild>
+              <Link to="/services">
+                Explore All Services
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
             </Button>
           </div>
         </div>
@@ -208,11 +214,15 @@ const Index = () => {
               systems and find the solutions you need. Get started with a free consultation today.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" variant="secondary" className="text-lg px-8 py-4">
-                Book Free Consultation
+              <Button size="lg" variant="secondary" className="text-lg px-8 py-4" asChild>
+                <Link to="/book-appointment">
+                  Book Free Consultation
+                </Link>
               </Button>
-              <Button size="lg" variant="outline" className="text-lg px-8 py-4 text-white border-white hover:bg-white hover:text-primary">
-                Call Now: (555) 123-4567
+              <Button size="lg" variant="outline" className="text-lg px-8 py-4 text-white border-white hover:bg-white hover:text-primary" asChild>
+                <Link to="tel:+15551234567">
+                  Call Now: (555) 123-4567
+                </Link>
               </Button>
             </div>
           </div>
