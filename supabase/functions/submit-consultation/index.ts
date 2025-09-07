@@ -40,8 +40,37 @@ serve(async (req) => {
       throw error;
     }
 
-    // Send email notification (optional - could integrate with SendGrid, etc.)
+    // Send email confirmation
     console.log("New consultation request:", data);
+    
+    try {
+      // Call email service
+      const emailResponse = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-consultation-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          phone,
+          country,
+          service,
+          message,
+          requestId: data.id
+        })
+      });
+
+      if (!emailResponse.ok) {
+        console.error("Email sending failed:", await emailResponse.text());
+      } else {
+        console.log("Consultation emails sent successfully");
+      }
+    } catch (emailError) {
+      console.error("Error sending emails:", emailError);
+      // Don't fail the request if email fails
+    }
 
     return new Response(
       JSON.stringify({ 
