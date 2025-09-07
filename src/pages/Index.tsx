@@ -12,7 +12,6 @@ import heroImage from "@/assets/hero-healthcare.jpg";
 import { Link } from "react-router-dom";
 
 const Index = () => {
-  // SEO and Meta Tags Setup
   useEffect(() => {
     document.title = "NextCare Global Services - International Healthcare Consulting & Insurance Navigation";
     
@@ -22,35 +21,54 @@ const Index = () => {
       metaDescription.setAttribute('content', 
         'Professional international healthcare consulting, insurance navigation, and medical access support for individuals and families worldwide. Expert guidance for quality care across borders.'
       );
+    } else {
+      const newMeta = document.createElement('meta');
+      newMeta.setAttribute('name', 'description');
+      newMeta.setAttribute('content', 'Professional international healthcare consulting, insurance navigation, and medical access support for individuals and families worldwide. Expert guidance for quality care across borders.');
+      document.head.appendChild(newMeta);
+    }
+
+    // Add viewport meta tag if missing
+    if (!document.querySelector('meta[name="viewport"]')) {
+      const viewport = document.createElement('meta');
+      viewport.setAttribute('name', 'viewport');
+      viewport.setAttribute('content', 'width=device-width, initial-scale=1.0');
+      document.head.appendChild(viewport);
     }
     
     // Add structured data for SEO
     const structuredData = {
       "@context": "https://schema.org",
-      "@type": "HealthcareOrganization",
+      "@type": "HealthcareOrganization", 
       "name": "NextCare Global Services",
       "description": "International healthcare consulting and insurance navigation services",
-      "url": "https://nextcareglobal.com",
+      "url": window.location.origin,
       "telephone": "+1-555-123-4567",
       "address": {
         "@type": "PostalAddress",
         "addressCountry": "US"
       },
       "medicalSpecialty": ["Healthcare Consulting", "Insurance Navigation", "Medical Travel Coordination"],
-      "serviceArea": "Worldwide"
+      "serviceArea": "Worldwide",
+      "potentialAction": {
+        "@type": "ScheduleAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": `${window.location.origin}/book-appointment`
+        }
+      }
     };
     
-    const script = document.createElement('script');
-    script.type = 'application/ld+json';
+    let script = document.querySelector('script[type="application/ld+json"]') as HTMLScriptElement;
+    if (!script) {
+      script = document.createElement('script') as HTMLScriptElement;
+      script.type = 'application/ld+json';
+      document.head.appendChild(script);
+    }
     script.textContent = JSON.stringify(structuredData);
-    document.head.appendChild(script);
     
     return () => {
-      // Cleanup
-      const existingScript = document.querySelector('script[type="application/ld+json"]');
-      if (existingScript) {
-        document.head.removeChild(existingScript);
-      }
+      // Cleanup handled by React
     };
   }, []);
 
