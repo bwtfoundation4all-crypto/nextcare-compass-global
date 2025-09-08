@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Shield } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -60,14 +60,6 @@ const Header = () => {
                 <Button variant="outline" size="sm" asChild>
                   <Link to="/dashboard">Dashboard</Link>
                 </Button>
-                {isAdmin && (
-                  <Button variant="outline" size="sm" asChild>
-                    <Link to="/admin">
-                      <Shield className="h-4 w-4 mr-1" />
-                      Admin
-                    </Link>
-                  </Button>
-                )}
                 <Button variant="outline" size="sm" onClick={handleLogout}>
                   Log out
                 </Button>

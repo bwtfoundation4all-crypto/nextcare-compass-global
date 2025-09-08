@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import Header from '@/components/Header';
+import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, FileText, CreditCard, UserCheck, Calendar, Settings } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Users, FileText, CreditCard, UserCheck, Calendar, Settings, LogOut, Building } from 'lucide-react';
 import { CustomersTab } from '@/components/admin/CustomersTab';
 import { EmployeesTab } from '@/components/admin/EmployeesTab';
 import { ConsultationsTab } from '@/components/admin/ConsultationsTab';
@@ -11,6 +12,7 @@ import { PaymentsTab } from '@/components/admin/PaymentsTab';
 import { SettingsTab } from '@/components/admin/SettingsTab';
 
 const Admin = () => {
+  const { user, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState('customers');
 
   const adminStats = [
@@ -44,16 +46,50 @@ const Admin = () => {
     }
   ];
 
+  const handleLogout = async () => {
+    await signOut();
+  };
+
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      {/* Admin Header */}
+      <div className="bg-white dark:bg-gray-900 shadow-sm border-b">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Building className="h-8 w-8 text-primary" />
+                <div>
+                  <h1 className="text-xl font-bold text-primary">NextCare Global</h1>
+                  <p className="text-sm text-muted-foreground">Admin Portal</p>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="text-right">
+                <p className="text-sm font-medium">{user?.email}</p>
+                <p className="text-xs text-muted-foreground">Administrator</p>
+              </div>
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <main className="container mx-auto px-4 py-8">
+        {/* Welcome Section */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-primary mb-2">Admin Portal</h1>
-          <p className="text-muted-foreground">
-            Manage customers, employees, consultations, and system settings.
-          </p>
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm p-6 border">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              Welcome to Admin Dashboard
+            </h2>
+            <p className="text-gray-600 dark:text-gray-300">
+              Internal management system for NextCare Global operations, customer data, and business analytics.
+            </p>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -61,7 +97,7 @@ const Admin = () => {
           {adminStats.map((stat, index) => {
             const Icon = stat.icon;
             return (
-              <Card key={index} className="shadow-card hover:shadow-hero transition-all duration-300">
+              <Card key={index} className="bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-all duration-300">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
                   <Icon className={`h-4 w-4 ${stat.color}`} />
@@ -75,8 +111,9 @@ const Admin = () => {
           })}
         </div>
 
-        {/* Admin Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        {/* Admin Management Tabs */}
+        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="p-6">
           <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="customers" className="flex items-center space-x-2">
               <Users className="h-4 w-4" />
@@ -127,7 +164,8 @@ const Admin = () => {
           <TabsContent value="settings">
             <SettingsTab />
           </TabsContent>
-        </Tabs>
+          </Tabs>
+        </div>
       </main>
     </div>
   );
