@@ -1,32 +1,19 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const location = useLocation();
-
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsLoggedIn(!!session);
-    });
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsLoggedIn(!!session);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
+  const { user, isAdmin, signOut } = useAuth();
 
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast({ title: "Logout failed", description: error.message });
-    } else {
-      toast({ title: "Signed out" });
-    }
+    await signOut();
+    toast({ title: "Signed out successfully" });
   };
 
   const navigation = [
@@ -68,11 +55,19 @@ const Header = () => {
                 {item.name}
               </Link>
             ))}
-            {isLoggedIn ? (
+            {user ? (
               <>
                 <Button variant="outline" size="sm" asChild>
                   <Link to="/dashboard">Dashboard</Link>
                 </Button>
+                {isAdmin && (
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to="/admin">
+                      <Shield className="h-4 w-4 mr-1" />
+                      Admin
+                    </Link>
+                  </Button>
+                )}
                 <Button variant="outline" size="sm" onClick={handleLogout}>
                   Log out
                 </Button>
@@ -126,7 +121,7 @@ const Header = () => {
                   {item.name}
                 </Link>
               ))}
-              {isLoggedIn ? (
+              {user ? (
                 <>
                   <Link
                     to="/dashboard"
