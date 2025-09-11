@@ -37,26 +37,48 @@ serve(async (req) => {
 
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { serviceId, appointmentId } = await req.json();
-    logStep("Request data received", { serviceId, appointmentId });
+    const { serviceId, appointmentId, amount, description } = await req.json();
+    logStep("Request data received", { serviceId, appointmentId, amount, description });
 
     // Initialize Stripe
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2023-10-16",
     });
 
-    // Get service details
-    const { data: service, error: serviceError } = await supabaseClient
-      .from("services")
-      .select("*")
-      .eq("id", serviceId)
-      .single();
+    let serviceDetails;
+    let sessionData;
 
-    if (serviceError || !service) {
-      throw new Error("Service not found");
+    // Handle custom payments vs service-based payments
+    if (serviceId === 'custom-payment' && amount) {
+      // Custom payment
+      sessionData = {
+        amount_cents: amount,
+        name: description || 'Custom Payment',
+        description: description || 'Custom payment'
+      };
+      logStep("Custom payment detected", { amount, description });
+    } else if (serviceId) {
+      // Service-based payment
+      const { data: service, error: serviceError } = await supabaseClient
+        .from("services")
+        .select("*")
+        .eq("id", serviceId)
+        .single();
+
+      if (serviceError || !service) {
+        throw new Error("Service not found");
+      }
+
+      serviceDetails = service;
+      sessionData = {
+        amount_cents: Math.round(service.price * 100),
+        name: service.name,
+        description: service.description
+      };
+      logStep("Service found", { serviceName: service.name, price: service.price });
+    } else {
+      throw new Error("Either serviceId or custom payment details required");
     }
-
-    logStep("Service found", { serviceName: service.name, price: service.price });
 
     // Check for existing customer
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
@@ -77,10 +99,10 @@ serve(async (req) => {
           price_data: {
             currency: "usd",
             product_data: { 
-              name: service.name,
-              description: service.description
+              name: sessionData.name,
+              description: sessionData.description
             },
-            unit_amount: Math.round(service.price * 100), // Convert to cents
+            unit_amount: sessionData.amount_cents,
           },
           quantity: 1,
         },
@@ -90,8 +112,9 @@ serve(async (req) => {
       cancel_url: `${req.headers.get("origin")}/payment-cancelled`,
       metadata: {
         user_id: user.id,
-        service_id: serviceId,
-        appointment_id: appointmentId || ""
+        service_id: serviceId || "custom",
+        appointment_id: appointmentId || "",
+        payment_type: serviceId === 'custom-payment' ? 'custom' : 'service'
       }
     });
 
@@ -107,9 +130,9 @@ serve(async (req) => {
     const { error: paymentError } = await supabaseService.from("payments").insert({
       user_id: user.id,
       stripe_session_id: session.id,
-      amount_cents: Math.round(service.price * 100),
+      amount_cents: sessionData.amount_cents,
       status: "pending",
-      service_type: service.name
+      service_type: sessionData.name
     });
 
     if (paymentError) {
