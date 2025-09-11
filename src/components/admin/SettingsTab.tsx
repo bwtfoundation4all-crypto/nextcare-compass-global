@@ -241,9 +241,9 @@ export const SettingsTab = () => {
                   
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="font-medium">Dwolla Bank Transfers</h4>
+                      <h4 className="font-medium">Stripe Payment Processing</h4>
                       <div className="text-sm text-muted-foreground">
-                        ACH payment processing
+                        Credit card and secure payment processing
                       </div>
                     </div>
                     <Badge variant="secondary">Connected</Badge>

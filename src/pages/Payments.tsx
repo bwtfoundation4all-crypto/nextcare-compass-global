@@ -36,7 +36,7 @@ const Payments = () => {
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
 
-  // Remove Dwolla state - now handled by DwollaIntegration component
+  // Form state for invoices
 
   useEffect(() => {
     const checkUser = async () => {
@@ -137,7 +137,35 @@ const Payments = () => {
     }
   };
 
-  // Dwolla functionality moved to DwollaIntegration component
+  const payInvoice = async (invoice: Invoice) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('create-stripe-checkout', {
+        body: {
+          serviceId: 'invoice-payment',
+          amount: invoice.amount_cents,
+          description: `Invoice Payment: ${invoice.description || 'Invoice #' + invoice.id.slice(0, 8)}`
+        }
+      });
+      
+      if (error) throw error;
+      
+      if (data?.url) {
+        window.open(data.url, '_blank');
+        toast({
+          title: "Payment Initiated",
+          description: "Stripe checkout opened for invoice payment",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to initiate payment",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Status and icon helpers
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -311,21 +339,41 @@ const Payments = () => {
                             </Button>
                           )}
                           {invoice.status === 'sent' && (
-                            <Button 
-                              size="sm" 
-                              onClick={() => updateInvoiceStatus(invoice.id, 'approved')}
-                            >
-                              Approve
-                            </Button>
+                            <>
+                              <Button 
+                                size="sm" 
+                                onClick={() => updateInvoiceStatus(invoice.id, 'approved')}
+                              >
+                                Approve
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => payInvoice(invoice)}
+                                className="bg-blue-600 hover:bg-blue-700 text-white"
+                              >
+                                Pay Now
+                              </Button>
+                            </>
                           )}
                           {invoice.status === 'approved' && (
-                            <Button 
-                              size="sm" 
-                              onClick={() => updateInvoiceStatus(invoice.id, 'paid')}
-                              className="bg-green-600 hover:bg-green-700"
-                            >
-                              Mark Paid
-                            </Button>
+                            <>
+                              <Button 
+                                size="sm" 
+                                onClick={() => updateInvoiceStatus(invoice.id, 'paid')}
+                                className="bg-green-600 hover:bg-green-700"
+                              >
+                                Mark Paid
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => payInvoice(invoice)}
+                                className="bg-blue-600 hover:bg-blue-700 text-white"
+                              >
+                                Pay Now
+                              </Button>
+                            </>
                           )}
                         </div>
                       </div>

@@ -128,11 +128,11 @@ const CustomerService = () => {
     },
     {
       question: "What payment methods do you accept?",
-      answer: "We use Dwolla for ACH bank transfers. You'll need to link your bank account for secure payments."
+      answer: "We use Stripe for secure credit card processing. All payments are PCI DSS compliant and processed instantly."
     },
     {
       question: "How long does payment processing take?",
-      answer: "ACH transfers typically take 1-3 business days to complete once approved."
+      answer: "Credit card payments are processed instantly with Stripe. You'll receive immediate confirmation once payment is complete."
     },
     {
       question: "Can I cancel an invoice?",
@@ -329,7 +329,7 @@ const CustomerService = () => {
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle className="h-4 w-4 text-green-500" />
-                <span className="text-sm">Dwolla ACH: Operational</span>
+                <span className="text-sm">Stripe Payment: Operational</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle className="h-4 w-4 text-green-500" />

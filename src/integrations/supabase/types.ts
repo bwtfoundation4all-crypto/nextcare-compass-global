@@ -155,9 +155,6 @@ export type Database = {
           currency: string
           description: string | null
           due_date: string | null
-          dwolla_customer_id: string | null
-          dwolla_funding_source_id: string | null
-          dwolla_transfer_id: string | null
           id: string
           status: string
           updated_at: string
@@ -169,9 +166,6 @@ export type Database = {
           currency?: string
           description?: string | null
           due_date?: string | null
-          dwolla_customer_id?: string | null
-          dwolla_funding_source_id?: string | null
-          dwolla_transfer_id?: string | null
           id?: string
           status?: string
           updated_at?: string
@@ -183,9 +177,6 @@ export type Database = {
           currency?: string
           description?: string | null
           due_date?: string | null
-          dwolla_customer_id?: string | null
-          dwolla_funding_source_id?: string | null
-          dwolla_transfer_id?: string | null
           id?: string
           status?: string
           updated_at?: string
@@ -243,7 +234,6 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
-          dwolla_customer_id: string | null
           first_name: string | null
           id: string
           last_name: string | null
@@ -253,7 +243,6 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          dwolla_customer_id?: string | null
           first_name?: string | null
           id?: string
           last_name?: string | null
@@ -263,7 +252,6 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          dwolla_customer_id?: string | null
           first_name?: string | null
           id?: string
           last_name?: string | null
