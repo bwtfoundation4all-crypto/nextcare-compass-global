@@ -10,7 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import Header from "@/components/Header";
-import { DwollaIntegration } from "@/components/DwollaIntegration";
+import { StripeIntegration } from "@/components/StripeIntegration";
 import { DollarSign, FileText, CheckCircle, Clock, XCircle } from "lucide-react";
 
 interface Invoice {
@@ -197,7 +197,7 @@ const Payments = () => {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h1 className="text-3xl font-bold">Payment Management</h1>
-              <p className="text-muted-foreground">Manage invoices and payments with Dwolla ACH</p>
+              <p className="text-muted-foreground">Manage invoices and payments with Stripe</p>
             </div>
             <Button 
               onClick={() => setShowForm(!showForm)}
@@ -212,7 +212,7 @@ const Payments = () => {
             <Card className="mb-8">
               <CardHeader>
                 <CardTitle>Create New Invoice</CardTitle>
-                <CardDescription>Create an invoice for Dwolla ACH payment processing</CardDescription>
+                <CardDescription>Create an invoice for Stripe payment processing</CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={createInvoice} className="space-y-4">
@@ -263,7 +263,7 @@ const Payments = () => {
           </Card>
           )}
 
-          <DwollaIntegration user={user} />
+          <StripeIntegration user={user} />
 
           <div className="space-y-4">
             <h2 className="text-2xl font-semibold">Your Invoices</h2>
