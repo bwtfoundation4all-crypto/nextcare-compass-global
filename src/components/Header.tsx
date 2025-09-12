@@ -5,6 +5,7 @@ import { Menu, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { SearchBar } from "@/components/SearchBar";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -39,6 +40,11 @@ const Header = () => {
               className="h-12 w-auto hover:opacity-90 transition-opacity"
             />
           </Link>
+
+          {/* Search Bar */}
+          <div className="hidden lg:block flex-1 max-w-md mx-8">
+            <SearchBar className="w-full" />
+          </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">

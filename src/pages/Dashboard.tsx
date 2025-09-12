@@ -6,9 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, FileText, CreditCard, Clock, CheckCircle, XCircle } from "lucide-react";
+import { DashboardAnalytics } from "@/components/DashboardAnalytics";
+import { AppointmentManagement } from "@/components/AppointmentManagement";
+import { Calendar, FileText, CreditCard, Clock, CheckCircle, XCircle, Plus, Settings } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { Link } from "react-router-dom";
 
 interface ConsultationRequest {
   id: string;
@@ -160,52 +163,40 @@ const Dashboard = () => {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
-            <div className="grid md:grid-cols-3 gap-6">
+            {/* Enhanced Dashboard Analytics */}
+            <DashboardAnalytics userId={user.id} />
+
+            {/* Quick Actions */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Consultations</CardTitle>
-                  <FileText className="h-4 w-4 text-muted-foreground" />
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Calendar className="mr-2 h-5 w-5" />
+                    Quick Actions
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{consultationRequests.length}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Healthcare consultation requests
-                  </p>
+                <CardContent className="space-y-3">
+                  <Button className="w-full justify-start bg-hero-gradient hover:opacity-90" asChild>
+                    <Link to="/book-appointment">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Book New Appointment
+                    </Link>
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start" asChild>
+                    <Link to="/services">
+                      <FileText className="mr-2 h-4 w-4" />
+                      Browse Services
+                    </Link>
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start" asChild>
+                    <Link to="/support">
+                      <Settings className="mr-2 h-4 w-4" />
+                      Contact Support
+                    </Link>
+                  </Button>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Upcoming Appointments</CardTitle>
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {appointments.filter(a => a.status === 'scheduled' || a.status === 'confirmed').length}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Scheduled consultations
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Payments</CardTitle>
-                  <CreditCard className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    ${payments.reduce((sum, p) => sum + (p.amount_cents / 100), 0).toFixed(2)}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Total amount paid
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Recent Consultation Requests</CardTitle>
@@ -293,48 +284,7 @@ const Dashboard = () => {
           </TabsContent>
 
           <TabsContent value="appointments" className="space-y-4">
-            {appointments.map((appointment) => (
-              <Card key={appointment.id}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                      {getStatusIcon(appointment.status)}
-                      {appointment.appointment_type}
-                    </CardTitle>
-                    {getStatusBadge(appointment.status)}
-                  </div>
-                  <CardDescription>
-                    {new Date(appointment.appointment_date).toLocaleString()}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="font-medium">Consultant:</span> {appointment.consultant_name || "TBD"}
-                    </div>
-                    <div>
-                      <span className="font-medium">Type:</span> {appointment.appointment_type}
-                    </div>
-                  </div>
-                  {appointment.notes && (
-                    <div className="mt-4">
-                      <span className="font-medium">Notes:</span>
-                      <p className="text-sm text-muted-foreground mt-1">{appointment.notes}</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-            {appointments.length === 0 && (
-              <Card>
-                <CardContent className="text-center py-8">
-                  <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No appointments scheduled</h3>
-                  <p className="text-muted-foreground mb-4">Your appointments will appear here</p>
-                  <Button onClick={() => navigate("/contact")}>Book Appointment</Button>
-                </CardContent>
-              </Card>
-            )}
+            <AppointmentManagement userId={user.id} />
           </TabsContent>
 
           <TabsContent value="payments" className="space-y-4">

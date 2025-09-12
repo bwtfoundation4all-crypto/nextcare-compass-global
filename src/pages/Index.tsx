@@ -5,6 +5,7 @@ import Testimonials from "@/components/Testimonials";
 import TrustBadges from "@/components/TrustBadges";
 import ContactForm from "@/components/ContactForm";
 import Footer from "@/components/Footer";
+import { FAQSection } from "@/components/FAQSection";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, Heart, Shield, Globe, Users } from "lucide-react";
@@ -252,6 +253,9 @@ const Index = () => {
       
       {/* Testimonials */}
       <Testimonials />
+      
+      {/* FAQ Section */}
+      <FAQSection />
       
       {/* Contact Form Section */}
       <section className="py-16 lg:py-24">

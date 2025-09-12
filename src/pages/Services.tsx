@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { ServiceCardSkeleton } from "@/components/LoadingSkeleton";
 import { 
   Heart, 
   FileText, 
@@ -17,10 +18,12 @@ import servicesImage from "@/assets/services-overview.jpg";
 
 const Services = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [services, setServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [paymentLoading, setPaymentLoading] = useState<string | null>(null);
+  const highlightService = searchParams.get('highlight');
 
   useEffect(() => {
     checkUser();
@@ -134,15 +137,22 @@ const Services = () => {
           </div>
 
           {loading ? (
-            <div className="flex justify-center items-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <ServiceCardSkeleton key={i} />
+              ))}
             </div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {services.map((service) => {
                 const IconComponent = getServiceIcon(service.name);
                 return (
-                  <Card key={service.id} className="shadow-card hover:shadow-hero transition-all duration-300 flex flex-col">
+                  <Card 
+                    key={service.id} 
+                    className={`shadow-card hover:shadow-hero transition-all duration-300 flex flex-col ${
+                      highlightService === service.id ? 'ring-2 ring-primary animate-pulse' : ''
+                    }`}
+                  >
                     <CardHeader>
                       <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
                         <IconComponent className="h-6 w-6 text-primary" />
