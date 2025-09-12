@@ -10,6 +10,7 @@ import { ConsultationsTab } from '@/components/admin/ConsultationsTab';
 import { AppointmentsTab } from '@/components/admin/AppointmentsTab';
 import { PaymentsTab } from '@/components/admin/PaymentsTab';
 import { SettingsTab } from '@/components/admin/SettingsTab';
+import AnalyticsTab from '@/components/admin/AnalyticsTab';
 
 const Admin = () => {
   const { user, signOut } = useAuth();
@@ -151,6 +152,10 @@ const Admin = () => {
 
           <TabsContent value="consultations">
             <ConsultationsTab />
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <AnalyticsTab />
           </TabsContent>
 
           <TabsContent value="appointments">
