@@ -1,319 +1,197 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import Header from "@/components/Header";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DashboardAnalytics } from "@/components/DashboardAnalytics";
-import { AppointmentManagement } from "@/components/AppointmentManagement";
-import { Calendar, FileText, CreditCard, Clock, CheckCircle, XCircle, Plus, Settings } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import { Link } from "react-router-dom";
-
-interface ConsultationRequest {
-  id: string;
-  name: string;
-  email: string;
-  service_type: string;
-  status: string;
-  created_at: string;
-  message: string;
-}
-
-interface Appointment {
-  id: string;
-  appointment_date: string;
-  appointment_type: string;
-  status: string;
-  consultant_name: string;
-  notes: string;
-}
-
-interface Payment {
-  id: string;
-  amount_cents: number;
-  currency: string;
-  status: string;
-  service_type: string;
-  created_at: string;
-}
+import React, { useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useNavigate } from 'react-router-dom';
+import { Calendar, FileText, CreditCard, MessageSquare, User, Settings, Bot, Users, Activity, Brain } from 'lucide-react';
+import AIHealthAssistant from '@/components/AIHealthAssistant';
+import FamilyManagement from '@/components/FamilyManagement';
+import HealthTimeline from '@/components/HealthTimeline';
+import DocumentAnalyzer from '@/components/DocumentAnalyzer';
 
 const Dashboard = () => {
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [consultationRequests, setConsultationRequests] = useState<ConsultationRequest[]>([]);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [payments, setPayments] = useState<Payment[]>([]);
+  const [activeTab, setActiveTab] = useState('overview');
 
-  useEffect(() => {
-    checkUser();
-  }, []);
-
-  const checkUser = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        navigate("/auth");
-        return;
-      }
-      setUser(user);
-      await fetchUserData(user);
-    } catch (error) {
-      console.error("Error checking user:", error);
-      navigate("/auth");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchUserData = async (user: any) => {
-    try {
-      // Fetch consultation requests
-      const { data: requests } = await supabase
-        .from("consultation_requests")
-        .select("*")
-        .eq("email", user.email)
-        .order("created_at", { ascending: false });
-
-      // Fetch appointments
-      const { data: appts } = await supabase
-        .from("appointments")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("appointment_date", { ascending: false });
-
-      // Fetch payments
-      const { data: paymentData } = await supabase
-        .from("payments")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-
-      setConsultationRequests(requests || []);
-      setAppointments(appts || []);
-      setPayments(paymentData || []);
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load your data. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-      pending: "outline",
-      contacted: "secondary",
-      scheduled: "default",
-      completed: "secondary",
-      cancelled: "destructive",
-      confirmed: "default",
-      paid: "secondary",
-      failed: "destructive"
-    };
-    return <Badge variant={variants[status] || "outline"}>{status}</Badge>;
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "completed":
-      case "paid":
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case "cancelled":
-      case "failed":
-        return <XCircle className="h-4 w-4 text-red-600" />;
-      case "scheduled":
-      case "confirmed":
-        return <Calendar className="h-4 w-4 text-blue-600" />;
-      default:
-        return <Clock className="h-4 w-4 text-yellow-600" />;
-    }
-  };
-
-  if (loading) {
-    return <LoadingSpinner />;
+  if (!user) {
+    navigate('/auth');
+    return null;
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
-      
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-heading font-bold mb-2">
-            Welcome back, {user?.user_metadata?.full_name || user?.email}
-          </h1>
-          <p className="text-muted-foreground">
-            Manage your healthcare consultations, appointments, and payments
-          </p>
+      <div className="container mx-auto py-8 px-4">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Welcome back!</h1>
+            <p className="text-muted-foreground">
+              {user?.email && `Hello, ${user.email}`}
+            </p>
+          </div>
+          <div className="flex gap-4">
+            <Button variant="outline" onClick={() => navigate('/contact')}>
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Contact Support
+            </Button>
+            <Button variant="outline" onClick={signOut}>
+              Sign Out
+            </Button>
+          </div>
         </div>
 
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="consultations">Consultations</TabsTrigger>
-            <TabsTrigger value="appointments">Appointments</TabsTrigger>
-            <TabsTrigger value="payments">Payments</TabsTrigger>
+            <TabsTrigger value="ai-assistant">AI Assistant</TabsTrigger>
+            <TabsTrigger value="family">Family</TabsTrigger>
+            <TabsTrigger value="timeline">Health Timeline</TabsTrigger>
+            <TabsTrigger value="documents">Documents</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
-            {/* Enhanced Dashboard Analytics */}
-            <DashboardAnalytics userId={user.id} />
-
-            {/* Quick Actions */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Card>
+          <TabsContent value="overview" className="mt-6">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/book-appointment')}>
                 <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Calendar className="mr-2 h-5 w-5" />
-                    Quick Actions
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-primary" />
+                    Book Appointment
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <Button className="w-full justify-start bg-hero-gradient hover:opacity-90" asChild>
-                    <Link to="/book-appointment">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Book New Appointment
-                    </Link>
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start" asChild>
-                    <Link to="/services">
-                      <FileText className="mr-2 h-4 w-4" />
-                      Browse Services
-                    </Link>
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start" asChild>
-                    <Link to="/support">
-                      <Settings className="mr-2 h-4 w-4" />
-                      Contact Support
-                    </Link>
-                  </Button>
+                <CardContent>
+                  <p className="text-muted-foreground">Schedule your next consultation with our healthcare professionals.</p>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveTab('ai-assistant')}>
                 <CardHeader>
-                  <CardTitle>Recent Consultation Requests</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <Bot className="h-5 w-5 text-primary" />
+                    AI Health Assistant
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {consultationRequests.slice(0, 3).map((request) => (
-                    <div key={request.id} className="flex items-center justify-between py-2">
-                      <div>
-                        <p className="font-medium">{request.service_type}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(request.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                      {getStatusBadge(request.status)}
-                    </div>
-                  ))}
-                  {consultationRequests.length === 0 && (
-                    <p className="text-muted-foreground">No consultation requests yet</p>
-                  )}
+                  <p className="text-muted-foreground">Get instant answers to your health questions from our AI assistant.</p>
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveTab('family')}>
                 <CardHeader>
-                  <CardTitle>Upcoming Appointments</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-primary" />
+                    Family Management
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {appointments.filter(a => a.status === 'scheduled' || a.status === 'confirmed').slice(0, 3).map((appointment) => (
-                    <div key={appointment.id} className="flex items-center justify-between py-2">
-                      <div>
-                        <p className="font-medium">{appointment.appointment_type}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(appointment.appointment_date).toLocaleDateString()}
-                        </p>
-                      </div>
-                      {getStatusBadge(appointment.status)}
-                    </div>
-                  ))}
-                  {appointments.filter(a => a.status === 'scheduled' || a.status === 'confirmed').length === 0 && (
-                    <p className="text-muted-foreground">No upcoming appointments</p>
-                  )}
+                  <p className="text-muted-foreground">Manage health records for your entire family in one place.</p>
+                </CardContent>
+              </Card>
+
+              <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveTab('timeline')}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="h-5 w-5 text-primary" />
+                    Health Timeline
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">Track your health journey with a comprehensive timeline.</p>
+                </CardContent>
+              </Card>
+
+              <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveTab('documents')}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Brain className="h-5 w-5 text-primary" />
+                    Document Analyzer
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">Upload and analyze your medical documents with AI.</p>
+                </CardContent>
+              </Card>
+
+              <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/services')}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    Our Services
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">Explore our comprehensive healthcare services and treatment options.</p>
+                </CardContent>
+              </Card>
+
+              <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/payments')}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="h-5 w-5 text-primary" />
+                    Payments
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">Manage your payments and billing information securely.</p>
+                </CardContent>
+              </Card>
+
+              <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/customer-service')}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="h-5 w-5 text-primary" />
+                    Customer Service
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">Get help with your account and service-related questions.</p>
+                </CardContent>
+              </Card>
+
+              <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/contact')}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5 text-primary" />
+                    Contact Us
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">Reach out to our team for any questions or concerns.</p>
                 </CardContent>
               </Card>
             </div>
           </TabsContent>
 
-          <TabsContent value="consultations" className="space-y-4">
-            {consultationRequests.map((request) => (
-              <Card key={request.id}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                      {getStatusIcon(request.status)}
-                      {request.service_type}
-                    </CardTitle>
-                    {getStatusBadge(request.status)}
-                  </div>
-                  <CardDescription>
-                    Submitted on {new Date(request.created_at).toLocaleDateString()}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4">{request.message}</p>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="font-medium">Email:</span> {request.email}
-                    </div>
-                    <div>
-                      <span className="font-medium">Status:</span> {request.status}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-            {consultationRequests.length === 0 && (
-              <Card>
-                <CardContent className="text-center py-8">
-                  <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No consultation requests</h3>
-                  <p className="text-muted-foreground mb-4">Start by submitting a consultation request</p>
-                  <Button onClick={() => navigate("/")}>Request Consultation</Button>
-                </CardContent>
-              </Card>
-            )}
+          <TabsContent value="ai-assistant" className="mt-6">
+            <AIHealthAssistant />
           </TabsContent>
 
-          <TabsContent value="appointments" className="space-y-4">
-            <AppointmentManagement userId={user.id} />
+          <TabsContent value="family" className="mt-6">
+            <FamilyManagement />
           </TabsContent>
 
-          <TabsContent value="payments" className="space-y-4">
-            {payments.map((payment) => (
-              <Card key={payment.id}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                      {getStatusIcon(payment.status)}
-                      ${(payment.amount_cents / 100).toFixed(2)} {payment.currency.toUpperCase()}
-                    </CardTitle>
-                    {getStatusBadge(payment.status)}
-                  </div>
-                  <CardDescription>
-                    {payment.service_type} - {new Date(payment.created_at).toLocaleDateString()}
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-            ))}
-            {payments.length === 0 && (
-              <Card>
-                <CardContent className="text-center py-8">
-                  <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No payments made</h3>
-                  <p className="text-muted-foreground mb-4">Your payment history will appear here</p>
-                  <Button onClick={() => navigate("/services")}>View Services</Button>
-                </CardContent>
-              </Card>
-            )}
+          <TabsContent value="timeline" className="mt-6">
+            <HealthTimeline />
+          </TabsContent>
+
+          <TabsContent value="documents" className="mt-6">
+            <DocumentAnalyzer />
+          </TabsContent>
+
+          <TabsContent value="settings" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="h-5 w-5 text-primary" />
+                  Account Settings
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground mb-4">Update your profile and manage your account preferences.</p>
+                <Button variant="outline">Coming Soon</Button>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
