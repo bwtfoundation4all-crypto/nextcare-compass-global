@@ -27,3 +27,6 @@ verify_jwt = false
 
 [functions.analyze-health-document]
 verify_jwt = true
+
+[functions.stripe-webhook]
+verify_jwt = false
