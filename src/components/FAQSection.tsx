@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Accordion,
   AccordionContent,
@@ -210,10 +211,10 @@ export const FAQSection = ({
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button className="bg-hero-gradient hover:opacity-90" asChild>
-                    <a href="/contact" className="flex items-center">
+                    <Link to="/contact" className="flex items-center">
                       <MessageCircle className="mr-2 h-4 w-4" />
                       Send us a message
-                    </a>
+                    </Link>
                   </Button>
                   <Button variant="outline" asChild>
                     <a href="tel:+15551234567" className="flex items-center">
@@ -222,10 +223,10 @@ export const FAQSection = ({
                     </a>
                   </Button>
                   <Button variant="outline" asChild>
-                    <a href="/book-appointment" className="flex items-center">
+                    <Link to="/book-appointment" className="flex items-center">
                       <Mail className="mr-2 h-4 w-4" />
                       Book consultation
-                    </a>
+                    </Link>
                   </Button>
                 </div>
               </CardContent>
