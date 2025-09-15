@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import Header from "@/components/Header";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -409,8 +409,8 @@ const BookAppointment = () => {
 
                 <p className="text-xs text-muted-foreground text-center">
                   By booking this appointment, you agree to our{" "}
-                  <a href="/privacy" className="text-primary underline">Privacy Policy</a> and{" "}
-                  <a href="/terms" className="text-primary underline">Terms of Service</a>.
+                  <Link to="/privacy" className="text-primary underline">Privacy Policy</Link> and{" "}
+                  <Link to="/terms" className="text-primary underline">Terms of Service</Link>.
                   You'll receive a confirmation email with appointment details.
                 </p>
               </form>

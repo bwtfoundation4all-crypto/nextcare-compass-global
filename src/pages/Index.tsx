@@ -159,10 +159,10 @@ const Index = () => {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => {
+            {features.map((feature) => {
               const IconComponent = feature.icon;
               return (
-                <Card key={index} className="text-center shadow-card hover:shadow-hero transition-shadow duration-300">
+                <Card key={feature.title} className="text-center shadow-card hover:shadow-hero transition-shadow duration-300">
                   <CardHeader>
                     <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                       <IconComponent className="h-8 w-8 text-primary" />

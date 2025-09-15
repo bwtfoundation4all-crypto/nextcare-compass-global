@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -189,8 +190,8 @@ const ContactForm = ({ title = "Get Free Consultation" }: { title?: string }) =>
 
           <p className="text-xs text-muted-foreground text-center">
             By submitting this form, you agree to our{" "}
-            <a href="/privacy" className="text-primary underline">Privacy Policy</a> and{" "}
-            <a href="/terms" className="text-primary underline">Terms of Service</a>.
+            <Link to="/privacy" className="text-primary underline">Privacy Policy</Link> and{" "}
+            <Link to="/terms" className="text-primary underline">Terms of Service</Link>.
             No obligation - completely free consultation.
           </p>
         </form>

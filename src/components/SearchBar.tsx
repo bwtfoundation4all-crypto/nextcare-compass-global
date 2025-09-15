@@ -161,9 +161,9 @@ export const SearchBar = ({
   const highlightMatch = (text: string, query: string) => {
     if (!query) return text;
     const parts = text.split(new RegExp(`(${query})`, 'gi'));
-    return parts.map((part, index) => 
+    return parts.map((part, partIndex) => 
       part.toLowerCase() === query.toLowerCase() ? 
-        <mark key={index} className="bg-yellow-200 text-yellow-900">{part}</mark> : part
+        <mark key={`highlight-${partIndex}-${part}`} className="bg-yellow-200 text-yellow-900">{part}</mark> : part
     );
   };
 
@@ -211,9 +211,9 @@ export const SearchBar = ({
                   </Button>
                 </div>
                 <div className="space-y-1">
-                  {recentSearches.map((search, index) => (
+                  {recentSearches.map((search) => (
                     <Button
-                      key={index}
+                      key={search}
                       variant="ghost"
                       size="sm"
                       onClick={() => handleRecentSearchClick(search)}

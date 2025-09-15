@@ -48,8 +48,8 @@ const Testimonials = () => {
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
-          {testimonials.map((testimonial, index) => (
-            <Card key={index} className="shadow-card hover:shadow-hero transition-all duration-300 bg-background/80 backdrop-blur">
+          {testimonials.map((testimonial) => (
+            <Card key={testimonial.name} className="shadow-card hover:shadow-hero transition-all duration-300 bg-background/80 backdrop-blur">
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex space-x-1">

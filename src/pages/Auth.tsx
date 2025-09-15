@@ -165,7 +165,7 @@ const Auth = () => {
       ...(CAPTCHA_ENABLED && captchaToken ? { captchaToken } : {})
     };
     
-    console.log('Signup attempt:', { email, captchaEnabled: CAPTCHA_ENABLED, authOptions });
+    // Removed debug logging for production
     
     const { error } = await supabase.auth.signUp({
       email,

@@ -88,8 +88,8 @@ export const ServicePayment = ({ service, user }: ServicePaymentProps) => {
           <div>
             <h4 className="font-semibold mb-2">What's Included:</h4>
             <ul className="space-y-1">
-              {service.features.map((feature, index) => (
-                <li key={index} className="flex items-start space-x-2">
+              {service.features.map((feature) => (
+                <li key={feature} className="flex items-start space-x-2">
                   <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                   <span className="text-sm text-muted-foreground">{feature}</span>
                 </li>
