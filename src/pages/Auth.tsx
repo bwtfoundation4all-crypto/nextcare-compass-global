@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { z } from "zod";
 
 // Pwned Passwords k-anonymity check utilities
 function ab2hex(buffer: ArrayBuffer): string {
@@ -53,6 +54,19 @@ const Auth = () => {
   // CAPTCHA is optional - if Supabase CAPTCHA isn't configured, we skip it
   const CAPTCHA_ENABLED = false; // Set to true when Supabase CAPTCHA is configured
 
+  // Input validation schema
+  const credentialsSchema = z.object({
+    email: z
+      .string()
+      .trim()
+      .email({ message: "Please enter a valid email address" })
+      .max(255, { message: "Email must be less than 255 characters" }),
+    password: z
+      .string()
+      .min(8, { message: "Password must be at least 8 characters" })
+      .max(128, { message: "Password must be less than 128 characters" }),
+  });
+
   // SEO basics
   useEffect(() => {
     document.title = "Login or Sign Up | NextCare Global Services";
@@ -95,9 +109,10 @@ const Auth = () => {
     const formData = new FormData(e.currentTarget);
     const email = String(formData.get("email") || "").trim();
     const password = String(formData.get("password") || "").trim();
-    
-    if (!email || !password) {
-      toast({ title: "Missing information", description: "Please enter your email and password." });
+
+    const result = credentialsSchema.safeParse({ email, password });
+    if (!result.success) {
+      toast({ title: "Invalid input", description: result.error.issues[0]?.message ?? "Please correct the form fields." });
       return;
     }
 
@@ -131,9 +146,10 @@ const Auth = () => {
     const formData = new FormData(e.currentTarget);
     const email = String(formData.get("email") || "").trim();
     const password = String(formData.get("password") || "").trim();
-    
-    if (!email || !password) {
-      toast({ title: "Missing information", description: "Please enter your email and password." });
+
+    const result = credentialsSchema.safeParse({ email, password });
+    if (!result.success) {
+      toast({ title: "Invalid input", description: result.error.issues[0]?.message ?? "Please correct the form fields." });
       return;
     }
 
