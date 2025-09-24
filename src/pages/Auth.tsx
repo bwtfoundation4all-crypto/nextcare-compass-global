@@ -159,34 +159,52 @@ const Auth = () => {
     }
 
     setLoading(true);
-    const redirectUrl = `${window.location.origin}/`;
+    
+    // Ensure redirect URL is reasonable length to prevent JSONB errors
+    const baseUrl = window.location.origin;
+    const redirectUrl = baseUrl.length > 200 ? baseUrl.substring(0, 200) : `${baseUrl}/`;
+    
     const authOptions = {
       emailRedirectTo: redirectUrl,
       ...(CAPTCHA_ENABLED && captchaToken ? { captchaToken } : {})
     };
     
-    // Removed debug logging for production
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: authOptions
-    });
-    setLoading(false);
-    
-    if (error) {
-      console.error('Signup error:', error);
-    }
-    
-    if (error) {
-      toast({ title: "Signup failed", description: error.message });
-      if (CAPTCHA_ENABLED) signupCaptchaRef.current?.reset();
-    } else {
-      toast({
-        title: "Check your email",
-        description: "We sent you a confirmation link to finish signing up."
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: authOptions
+      });
+      
+      if (error) {
+        console.error('Signup error:', error);
+        
+        // Handle specific database errors
+        if (error.message?.includes('string too long') || error.message?.includes('jsonb')) {
+          toast({ 
+            title: "Signup temporarily unavailable", 
+            description: "Please try again in a few moments or contact support if the issue persists." 
+          });
+        } else {
+          toast({ title: "Signup failed", description: error.message });
+        }
+        
+        if (CAPTCHA_ENABLED) signupCaptchaRef.current?.reset();
+      } else {
+        toast({
+          title: "Check your email",
+          description: "We sent you a confirmation link to finish signing up."
+        });
+      }
+    } catch (unexpectedError) {
+      console.error('Unexpected signup error:', unexpectedError);
+      toast({ 
+        title: "Signup error", 
+        description: "An unexpected error occurred. Please try again." 
       });
     }
+    
+    setLoading(false);
   };
 
   return (
