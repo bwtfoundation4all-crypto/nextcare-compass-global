@@ -21,14 +21,14 @@ export const useAuth = () => {
         .eq('user_id', userId)
         .order('role')
         .limit(1)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no role exists
 
       if (error) {
         console.error('Error fetching user role:', error);
         return 'customer'; // Default role
       }
 
-      return data?.role as UserRole;
+      return data?.role as UserRole || 'customer'; // Ensure we always return a role
     } catch (error) {
       console.error('Error fetching user role:', error);
       return 'customer';

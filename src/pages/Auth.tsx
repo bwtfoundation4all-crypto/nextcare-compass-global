@@ -186,7 +186,7 @@ const Auth = () => {
     };
     
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: authOptions
@@ -196,18 +196,7 @@ const Auth = () => {
         console.error('Signup error:', error);
         toast({ title: "Signup failed", description: error.message });
         if (CAPTCHA_ENABLED) signupCaptchaRef.current?.reset();
-      } else if (data.user) {
-        // Create user profile after successful signup
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            user_id: data.user.id
-          });
-        
-        if (profileError) {
-          console.error('Profile creation error:', profileError);
-        }
-        
+      } else {
         toast({
           title: "Account created successfully",
           description: "Please check your email to verify your account."
