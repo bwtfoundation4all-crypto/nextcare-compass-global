@@ -186,7 +186,7 @@ const Auth = () => {
     };
     
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: authOptions
@@ -194,22 +194,23 @@ const Auth = () => {
       
       if (error) {
         console.error('Signup error:', error);
-        
-        // Handle specific database errors
-        if (error.message?.includes('string too long') || error.message?.includes('jsonb')) {
-          toast({ 
-            title: "Signup temporarily unavailable", 
-            description: "Please try again in a few moments or contact support if the issue persists." 
+        toast({ title: "Signup failed", description: error.message });
+        if (CAPTCHA_ENABLED) signupCaptchaRef.current?.reset();
+      } else if (data.user) {
+        // Create user profile after successful signup
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: data.user.id
           });
-        } else {
-          toast({ title: "Signup failed", description: error.message });
+        
+        if (profileError) {
+          console.error('Profile creation error:', profileError);
         }
         
-        if (CAPTCHA_ENABLED) signupCaptchaRef.current?.reset();
-      } else {
         toast({
-          title: "Check your email",
-          description: "We sent you a confirmation link to finish signing up."
+          title: "Account created successfully",
+          description: "Please check your email to verify your account."
         });
       }
     } catch (unexpectedError) {
