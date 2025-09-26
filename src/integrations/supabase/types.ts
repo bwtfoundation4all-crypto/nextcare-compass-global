@@ -148,18 +148,6 @@ export type Database = {
         }
         Relationships: []
       }
-      "azureserve.database.windows.net": {
-        Row: {
-          azure: string | null
-        }
-        Insert: {
-          azure?: string | null
-        }
-        Update: {
-          azure?: string | null
-        }
-        Relationships: []
-      }
       banking_transactions: {
         Row: {
           account_type: string
