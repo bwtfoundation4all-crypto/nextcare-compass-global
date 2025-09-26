@@ -1,15 +1,14 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
-import { Resend } from "npm:resend@2.0.0";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-const supabaseUrl = Deno.env.get('SUPABASE_URL');
-const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+const supabaseUrl = Deno.env.get('SUPABASE_URL');
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+const resendApiKey = Deno.env.get('RESEND_API_KEY');
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -47,7 +46,8 @@ serve(async (req) => {
         minute: '2-digit' 
       });
 
-      return resend.emails.send({
+      // Send email using Resend API directly
+      const emailBody = {
         from: "NextCare Global Services <appointments@resend.dev>",
         to: [appointment.contact_email],
         subject: "Appointment Reminder - Tomorrow",
@@ -89,6 +89,15 @@ serve(async (req) => {
             </p>
           </div>
         `,
+      };
+
+      return fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${resendApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(emailBody)
       });
     }) || [];
 

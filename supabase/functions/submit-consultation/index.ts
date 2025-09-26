@@ -44,14 +44,9 @@ serve(async (req) => {
     console.log("New consultation request:", data);
     
     try {
-      // Call email service
-      const emailResponse = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-consultation-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
-        },
-        body: JSON.stringify({
+      // Call email service (using try-catch to prevent failure if email service fails)
+      await supabaseClient.functions.invoke('send-consultation-email', {
+        body: {
           name,
           email,
           phone,
@@ -59,16 +54,11 @@ serve(async (req) => {
           service,
           message,
           requestId: data.id
-        })
+        }
       });
-
-      if (!emailResponse.ok) {
-        console.error("Email sending failed:", await emailResponse.text());
-      } else {
-        console.log("Consultation emails sent successfully");
-      }
+      console.log("Consultation emails sent successfully");
     } catch (emailError) {
-      console.error("Error sending emails:", emailError);
+      console.error("Email sending failed:", emailError);
       // Don't fail the request if email fails
     }
 

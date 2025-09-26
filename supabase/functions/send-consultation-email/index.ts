@@ -1,12 +1,11 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+const resendApiKey = Deno.env.get("RESEND_API_KEY");
 
 interface ConsultationEmailRequest {
   name: string;
@@ -136,12 +135,12 @@ const handler = async (req: Request): Promise<Response> => {
       `,
     });
 
-    console.log("Consultation emails sent successfully:", { userEmailResponse, adminEmailResponse });
+    console.log("Consultation emails sent successfully:", { userResponse: userResponse.status, adminResponse: adminResponse.status });
 
     return new Response(JSON.stringify({ 
       success: true, 
-      userEmailId: userEmailResponse.data?.id,
-      adminEmailId: adminEmailResponse.data?.id 
+      userEmailSent: userResponse.status === 'fulfilled',
+      adminEmailSent: adminResponse.status === 'fulfilled'
     }), {
       status: 200,
       headers: {
