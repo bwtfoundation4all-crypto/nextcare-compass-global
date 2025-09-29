@@ -1,12 +1,11 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+const resendApiKey = Deno.env.get("RESEND_API_KEY");
 
 interface ContactEmailRequest {
   name: string;
@@ -25,7 +24,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { name, email, subject = "Contact Form Submission", message, type = "general" }: ContactEmailRequest = await req.json();
 
     // Send confirmation email to user
-    const userEmailResponse = await resend.emails.send({
+    const userEmailBody = {
       from: "NextCare Global <noreply@resend.dev>",
       to: [email],
       subject: "We received your message - NextCare Global",
@@ -77,10 +76,19 @@ const handler = async (req: Request): Promise<Response> => {
           </div>
         </div>
       `,
+    };
+
+    const userEmailResponse = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userEmailBody)
     });
 
     // Send notification email to admin
-    const adminEmailResponse = await resend.emails.send({
+    const adminEmailBody = {
       from: "NextCare Notifications <notifications@resend.dev>",
       to: ["admin@nextcareglobal.com"], // Replace with actual admin email
       subject: `New Contact Form: ${subject}`,
@@ -111,14 +119,26 @@ const handler = async (req: Request): Promise<Response> => {
           </div>
         </div>
       `,
+    };
+
+    const adminEmailResponse = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(adminEmailBody)
     });
 
-    console.log("Contact emails sent successfully:", { userEmailResponse, adminEmailResponse });
+    console.log("Contact emails sent successfully:", { 
+      userStatus: userEmailResponse.status, 
+      adminStatus: adminEmailResponse.status 
+    });
 
     return new Response(JSON.stringify({ 
       success: true, 
-      userEmailId: userEmailResponse.data?.id,
-      adminEmailId: adminEmailResponse.data?.id 
+      userEmailSent: userEmailResponse.ok,
+      adminEmailSent: adminEmailResponse.ok
     }), {
       status: 200,
       headers: {
