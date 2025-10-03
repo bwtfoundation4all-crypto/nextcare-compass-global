@@ -116,7 +116,7 @@ export type Database = {
           preferred_language: string | null
           status: string | null
           updated_at: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           appointment_date: string
@@ -130,7 +130,7 @@ export type Database = {
           preferred_language?: string | null
           status?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           appointment_date?: string
@@ -144,7 +144,7 @@ export type Database = {
           preferred_language?: string | null
           status?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
