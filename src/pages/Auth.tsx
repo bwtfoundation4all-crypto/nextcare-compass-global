@@ -176,12 +176,9 @@ const Auth = () => {
 
     setLoading(true);
     
-    // Ensure redirect URL is reasonable length to prevent JSONB errors
-    const baseUrl = window.location.origin;
-    const redirectUrl = baseUrl.length > 200 ? baseUrl.substring(0, 200) : `${baseUrl}/`;
-    
+    // Use simple relative path to avoid JSONB string length errors with long preview URLs
     const authOptions = {
-      emailRedirectTo: redirectUrl,
+      emailRedirectTo: `${window.location.origin}/`,
       ...(CAPTCHA_ENABLED && captchaToken ? { captchaToken } : {})
     };
     
