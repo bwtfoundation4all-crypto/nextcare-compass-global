@@ -16,6 +16,20 @@ serve(async (req) => {
   }
 
   try {
+    // Security: Verify the request is from an authorized cron job
+    const cronSecretKey = Deno.env.get('CRON_SECRET_KEY');
+    const authHeader = req.headers.get('authorization');
+    
+    if (!cronSecretKey || authHeader !== `Bearer ${cronSecretKey}`) {
+      console.error('Unauthorized attempt to access appointment reminder endpoint');
+      return new Response(JSON.stringify({ 
+        error: 'Unauthorized' 
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const supabase = createClient(supabaseUrl!, supabaseServiceKey!);
 
     // Get appointments in the next 24 hours
